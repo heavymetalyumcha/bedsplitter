@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aeropress Filter Screen Designer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f7f4; --surface: #fff; --border: #e2ddd6; --border2: #c8c2b8;
+    --text: #1a1916; --muted: #6b6760; --faint: #9e9890;
+    --green-bg: #eaf5e6; --green: #2d7a3a;
+    --amber-bg: #fdf3e0; --amber: #8a5a00;
+    --red-bg: #fdecea; --red: #b5280f;
+    --accent: #1a1916;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  header { padding: 18px 24px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  header h1 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .layout { display: grid; grid-template-columns: 310px 1fr; gap: 0; height: calc(100vh - 57px); }
+  .panel { padding: 20px; overflow-y: auto; border-right: 1px solid var(--border); background: var(--surface); }
+  .right { padding: 20px; display: grid; grid-template-rows: 1fr auto; gap: 16px; overflow-y: auto; min-height: 0; }
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
+  .sep { height: 1px; background: var(--border); margin: 16px 0; }
+  .ctrl { margin-bottom: 14px; }
+  .ctrl-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 5px; }
+  .ctrl-top label { font-size: 12px; color: var(--muted); }
+  .ctrl-val { display: flex; align-items: center; gap: 4px; }
+  .ctrl-val input[type=number] { width: 58px; font-size: 13px; text-align: right; padding: 3px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+  .ctrl-val input[type=number]:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .ctrl-val .unit { font-size: 12px; color: var(--faint); }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; display: block; }
+  select { width: 100%; font-size: 13px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); cursor: pointer; appearance: auto; }
+  .pdesc { font-size: 11px; color: var(--faint); margin: 4px 0 14px; line-height: 1.5; min-height: 32px; }
+  .mat-hint { font-size: 11px; color: var(--faint); margin: -5px 0 4px; line-height: 1.5; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; }
+  .stat-lbl { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+  .stat-val { font-size: 16px; font-weight: 600; }
+  button.dl { width: 100%; padding: 10px; font-size: 13px; font-weight: 500; border: 1.5px solid var(--text); border-radius: 8px; background: var(--text); color: #fff; cursor: pointer; transition: background .15s; }
+  button.dl:hover { background: #333; }
+  .dl-note { font-size: 11px; color: var(--faint); text-align: center; margin-top: 6px; }
+  svg#preview { width: 100%; max-width: 100%; aspect-ratio: 1 / 1; border: 1px solid var(--border); border-radius: 10px; display: block; background: var(--bg); }
+  .preview-note { font-size: 11px; color: var(--faint); text-align: center; margin-top: 5px; }
+  .checks-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .checks-title { font-size: 12px; font-weight: 600; margin-bottom: 13px; }
+  .chk { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 10px; }
+  .chk:last-child { margin-bottom: 0; }
+  .badge { width: 19px; height: 19px; border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .badge-ok { background: var(--green-bg); color: var(--green); }
+  .badge-wn { background: var(--amber-bg); color: var(--amber); }
+  .badge-fl { background: var(--red-bg); color: var(--red); }
+  .chk-title { font-size: 12px; font-weight: 500; margin-bottom: 1px; }
+  .chk-detail { font-size: 11px; line-height: 1.4; }
+  .detail-ok { color: var(--green); }
+  .detail-wn { color: var(--amber); }
+  .detail-fl { color: var(--red); }
+  .checks-note { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--faint); line-height: 1.5; }
+  .alert { font-size: 11px; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; display: none; }
+  .alert-wn { background: var(--amber-bg); color: var(--amber); }
+  .alert-fl { background: var(--red-bg); color: var(--red); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<header>
+  <h1>Aeropress Filter Screen Designer</h1>
+  <p>63.5 mm diameter · photoetch / photochemical machining · SVG export</p>
+</header>
+<div class="layout">
+<div class="panel">
+  <div style="margin-bottom:6px">
+    <div class="section-label" style="margin-bottom:6px">Grid pattern</div>
+    <select id="pat">
+      <option value="hex">Hexagonal (honeycomb)</option>
+      <option value="square">Square grid</option>
+      <option value="diamond">Diamond (45° rotated)</option>
+      <option value="brick">Brick / running bond</option>
+      <option value="radial">Radial (concentric rings)</option>
+      <option value="fib">Fibonacci / sunflower</option>
+      <option value="poisson">Poisson disk (organic)</option>
+    </select>
+  </div>
+  <p id="pdesc" class="pdesc"></p>
+  <div class="sep"></div>
+
+  <div class="section-label">Screen holes</div>
+  <div class="ctrl"><div class="ctrl-top"><label>Hole diameter</label><div class="ctrl-val"><input type="number" id="hs-n" min=".05" max="3" step=".01" value=".3"><span class="unit">mm</span></div></div><input type="range" id="hs-r" min=".05" max="3" step=".01" value=".3"></div>
+  <div class="ctrl"><div class="ctrl-top"><label>Spacing (centre-to-centre)</label><div class="ctrl-val"><input type="number" id="sp-n" min=".1" max="6" step=".01" value=".6"><span class="unit">mm</span></div></div><input type="range" id="sp-r" min=".1" max="6" step=".01" value=".6"></div>
+  <div class="sep"></div>
+
+  <div class="section-label">Borders</div>
+  <div class="ctrl"><div class="ctrl-top"><label>Outer border width</label><div class="ctrl-val"><input type="number" id="ob-n" min=".5" max="12" step=".1" value="3"><span class="unit">mm</span></div></div><input type="range" id="ob-r" min=".5" max="12" step=".1" value="3"></div>
+  <div class="ctrl"><div class="ctrl-top"><label>Center hole diameter</label><div class="ctrl-val"><input type="number" id="ch-n" min="1" max="15" step=".1" value="5"><span class="unit">mm</span></div></div><input type="range" id="ch-r" min="1" max="15" step=".1" value="5"></div>
+  <div class="ctrl"><div class="ctrl-top"><label>Center border width</label><div class="ctrl-val"><input type="number" id="cb-n" min=".5" max="10" step=".1" value="2"><span class="unit">mm</span></div></div><input type="range" id="cb-r" min=".5" max="10" step=".1" value="2"></div>
+  <div class="sep"></div>
+
+  <div class="section-label">Material</div>
+  <div class="ctrl"><div class="ctrl-top"><label>Sheet thickness</label><div class="ctrl-val"><input type="number" id="th-n" min=".05" max=".5" step=".01" value=".1"><span class="unit">mm</span></div></div><input type="range" id="th-r" min=".05" max=".5" step=".01" value=".1"></div>
+  <p class="mat-hint">Fine filter ≈ 0.1 mm · Able Disk ≈ 0.2 mm · structural ≈ 0.3–0.5 mm</p>
+  <div class="sep"></div>
+
+  <div id="a-empty" class="alert alert-fl">✗ No valid hole zone — reduce borders or center size</div>
+  <div id="a-lim" class="alert alert-wn">Preview limited to 4 000 holes. Export includes all.</div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Holes</div><div class="stat-val" id="cnt">—</div></div>
+    <div class="stat"><div class="stat-lbl">Open area</div><div class="stat-val" id="oa">—</div></div>
+    <div class="stat"><div class="stat-lbl">Web width</div><div class="stat-val" id="web">—</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <button class="dl" onclick="dl()">SVG ↓</button>
+    <button class="dl" onclick="dlPDF()">PDF ↓</button>
+  </div>
+  <p class="dl-note">Hairline red strokes · actual mm · photoetch ready</p>
+</div>
+
+<div class="right">
+  <div style="min-height:0;display:flex;flex-direction:column;gap:6px">
+    <svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg>
+    <p class="preview-note">63.5 mm diameter · dashed lines = border zones (guides only, not cut)</p>
+  </div>
+
+  <div class="checks-card">
+    <div class="checks-title">Photoetch manufacturing checks</div>
+    <div id="checks"></div>
+    <div class="checks-note">
+      Assumes double-sided etch on stainless steel. Standard rules of thumb: hole diameter ≥ 1.2× material thickness, web width (gap) ≥ 1× thickness, etch ratio (thickness ÷ hole) ≤ 1.0, open area 20–50% for structural integrity. Always confirm exact tolerances with your photoetch supplier before committing to film.
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const D=63.5,R=D/2,PAD=3,VS=D+PAD*2;
+const sv=document.getElementById('preview');
+sv.setAttribute('viewBox',`${-(R+PAD)} ${-(R+PAD)} ${VS} ${VS}`);
+
+const PDESC={
+  hex:'Triangular lattice — tightest packing, highest open area for a given spacing. Ideal for filtration efficiency.',
+  square:'Aligned rows and columns. Predictable, easy to verify spacing and count.',
+  diamond:'Square grid rotated 45°. Same density as square grid, but diagonal grain direction.',
+  brick:'Staggered rows at full square row height — like brickwork. Denser than square, less dense than hex.',
+  radial:'Concentric rings of holes. Angular spacing adjusts per ring to stay uniform throughout.',
+  fib:'Golden-angle phyllotaxis — no dominant radial spokes, structurally isotropic. As seen in sunflower seeds.',
+  poisson:'Minimum-distance random packing. Organic, non-repeating. Fixed seed, so results are reproducible.'
+};
+
+function makeRng(s){let t=s|0;return()=>{t=(Math.imul(t,1664525)+1013904223)|0;return(t>>>0)/4294967296;};}
+const gv=id=>parseFloat(document.getElementById(id).value)||0;
+const gp=()=>({hs:gv('hs-n'),sp:gv('sp-n'),ob:gv('ob-n'),ch:gv('ch-n'),cb:gv('cb-n'),pat:document.getElementById('pat').value});
+
+function genHoles(p){
+  const maxR=R-p.ob-p.hs/2,minR=p.ch/2+p.cb+p.hs/2;
+  if(maxR<=0||maxR<=minR)return[];
+  const ok=(x,y)=>{const d=Math.hypot(x,y);return d<=maxR&&d>=minR;};
+  const H=[],sp=p.sp;
+  if(p.pat==='square'){
+    for(let y=-R;y<=R;y+=sp)for(let x=-R;x<=R;x+=sp)ok(x,y)&&H.push([x,y]);
+  }else if(p.pat==='hex'){
+    const rh=sp*Math.sqrt(3)/2;
+    for(let row=0,y=-R;y<=R;y+=rh,row++){const o=(row%2)*(sp/2);for(let x=-R+o;x<=R;x+=sp)ok(x,y)&&H.push([x,y]);}
+  }else if(p.pat==='diamond'){
+    const s=sp/Math.sqrt(2),lim=Math.ceil(R/s)+2;
+    for(let i=-lim;i<=lim;i++)for(let j=-lim;j<=lim;j++){const x=(i-j)*s,y=(i+j)*s;if(Math.abs(x)>R+sp||Math.abs(y)>R+sp)continue;ok(x,y)&&H.push([x,y]);}
+  }else if(p.pat==='brick'){
+    for(let row=0,y=-R;y<=R;y+=sp,row++){const o=(row%2)*(sp/2);for(let x=-R+o;x<=R;x+=sp)ok(x,y)&&H.push([x,y]);}
+  }else if(p.pat==='radial'){
+    for(let r=minR;r<=maxR;r+=sp){const n=Math.max(1,Math.floor(2*Math.PI*r/sp));for(let i=0;i<n;i++){const a=2*Math.PI*i/n;H.push([r*Math.cos(a),r*Math.sin(a)]);}}
+  }else if(p.pat==='fib'){
+    const phi=Math.PI*(3-Math.sqrt(5)),c=sp*1.12,mN=Math.ceil((maxR/c)**2)+80;
+    for(let n=1;n<=mN;n++){const r=c*Math.sqrt(n);if(r>maxR+sp)break;const t=n*phi,x=r*Math.cos(t),y=r*Math.sin(t);ok(x,y)&&H.push([x,y]);}
+  }else{
+    const rng=makeRng(0xC0FFEE),cs=sp/Math.sqrt(2),o2=R+PAD,grid=new Map();
+    const key=(a,b)=>`${a},${b}`,gc=v=>Math.floor((v+o2)/cs);
+    const near=(x,y)=>{const gx=gc(x),gy=gc(y);for(let dx=-2;dx<=2;dx++)for(let dy=-2;dy<=2;dy++){const pts=grid.get(key(gx+dx,gy+dy));if(pts)for(const q of pts)if(Math.hypot(x-q[0],y-q[1])<sp)return true;}return false;};
+    const add=(x,y)=>{const k=key(gc(x),gc(y));if(!grid.has(k))grid.set(k,[]);grid.get(k).push([x,y]);H.push([x,y]);};
+    // Seed with evenly-distributed points across the whole zone so propagation
+    // starts everywhere, not just from one corner
+    const nRings=Math.max(3,Math.ceil((maxR-minR)/(sp*2.5)));
+    for(let ri=0;ri<=nRings;ri++){
+      const r=minR+(maxR-minR)*(ri/nRings);
+      const nPts=Math.max(5,Math.round(2*Math.PI*r/(sp*2.5)));
+      for(let i=0;i<nPts;i++){
+        const a=2*Math.PI*i/nPts+ri*1.1; // stagger each ring's start angle
+        const x=r*Math.cos(a),y=r*Math.sin(a);
+        if(ok(x,y)&&!near(x,y))add(x,y);
+      }
+    }
+    if(H.length===0){let at=0;while(H.length===0&&at<500){at++;const a=rng()*6.283,r=minR+rng()*(maxR-minR),x=r*Math.cos(a),y=r*Math.sin(a);if(ok(x,y))add(x,y);}}
+    const active=[...H];let it=0;
+    while(active.length>0&&H.length<4000&&it<120000){it++;const i=Math.floor(rng()*active.length);const[ax,ay]=active[i];let f=false;for(let k=0;k<20;k++){const a=rng()*6.283,d=sp*(1+rng()),nx=ax+d*Math.cos(a),ny=ay+d*Math.sin(a);if(ok(nx,ny)&&!near(nx,ny)){add(nx,ny);active.push([nx,ny]);f=true;break;}}if(!f)active.splice(i,1);}
+  }
+  return H;
+}
+
+function mkChk(title,st,detail){
+  const cls={ok:'ok',wn:'wn',fl:'fl'}[st];
+  const icon={ok:'✓',wn:'!',fl:'✗'}[st];
+  return`<div class="chk"><span class="badge badge-${cls}">${icon}</span><div><div class="chk-title">${title}</div><div class="chk-detail detail-${cls}">${detail}</div></div></div>`;
+}
+
+function render(){
+  const p=gp();
+  document.getElementById('pdesc').textContent=PDESC[p.pat]||'';
+  const maxR=R-p.ob-p.hs/2,minR=p.ch/2+p.cb+p.hs/2;
+  document.getElementById('a-empty').style.display=maxR<=minR?'block':'none';
+  const H=genHoles(p);
+  const over=H.length>4000;
+  document.getElementById('a-lim').style.display=over?'block':'none';
+  const shown=over?H.slice(0,4000):H;
+  const hr=(p.hs/2).toFixed(3);
+
+  let s=`<circle cx="0" cy="0" r="${R}" fill="#f0ede8" stroke="#1a1916" stroke-width=".4"/>`;
+  if(R-p.ob>0&&R-p.ob<R)s+=`<circle cx="0" cy="0" r="${(R-p.ob).toFixed(3)}" fill="none" stroke="#aaa" stroke-width=".2" stroke-dasharray=".8 .5"/>`;
+  const cbR=p.ch/2+p.cb;
+  if(cbR>0&&cbR<R-p.ob)s+=`<circle cx="0" cy="0" r="${cbR.toFixed(3)}" fill="none" stroke="#aaa" stroke-width=".2" stroke-dasharray=".8 .5"/>`;
+  s+=`<g fill="#888" stroke="#666" stroke-width=".12">`;
+  for(const[x,y]of shown)s+=`<circle cx="${x.toFixed(3)}" cy="${y.toFixed(3)}" r="${hr}"/>`;
+  s+=`</g><circle cx="0" cy="0" r="${(p.ch/2).toFixed(3)}" fill="#fff" stroke="#1a1916" stroke-width=".4"/>`;
+  sv.innerHTML=s;
+
+  const sA=Math.PI*(R*R-(p.ch/2)**2);
+  const hA=H.length*Math.PI*(p.hs/2)**2;
+  const openPct=sA>0?hA/sA*100:0;
+  const webW=p.sp-p.hs;
+  document.getElementById('cnt').textContent=H.length.toLocaleString();
+  document.getElementById('oa').textContent=openPct.toFixed(1)+'%';
+  document.getElementById('web').textContent=webW>0?webW.toFixed(2)+' mm':'overlap';
+
+  const th=gv('th-n'),minH=th*1.2,er=p.hs>0?th/p.hs:99;
+  const chks=[
+    mkChk('Hole diameter',
+      p.hs>=minH?'ok':p.hs>=th?'wn':'fl',
+      p.hs>=minH?`${p.hs.toFixed(2)} mm — passes (min ${minH.toFixed(2)} mm = 1.2× thickness)`:
+      p.hs>=th?`${p.hs.toFixed(2)} mm — marginal; aim for ≥ ${minH.toFixed(2)} mm (1.2× thickness)`:
+      `${p.hs.toFixed(2)} mm — below minimum ${minH.toFixed(2)} mm for ${th} mm stock`
+    ),
+    mkChk('Web width (gap between holes)',
+      webW>=th?'ok':webW>=th*0.8&&webW>0?'wn':'fl',
+      webW>=th?`${webW.toFixed(2)} mm — passes (min ${th.toFixed(2)} mm = 1× thickness)`:
+      webW>0?`${webW.toFixed(2)} mm — too narrow; minimum ${th.toFixed(2)} mm for ${th} mm stock`:
+      'Holes overlap — increase spacing or reduce hole diameter'
+    ),
+    mkChk('Etch ratio (thickness ÷ hole diameter)',
+      er<=1.0?'ok':er<=1.5?'wn':'fl',
+      er<=1.0?`${er.toFixed(2)} — clean through-holes expected (limit ≤ 1.0 for double-sided etch)`:
+      er<=1.5?`${er.toFixed(2)} — marginal; risk of undercutting, consult your supplier`:
+      `${er.toFixed(2)} — too high; holes unlikely to etch cleanly through at this thickness`
+    ),
+    mkChk('Clogging risk (hole vs. grind fines)',
+      p.hs>=0.5?'ok':p.hs>=0.3?'wn':'fl',
+      p.hs>=0.5?`${p.hs.toFixed(2)} mm — low risk; fines should pass through freely`:
+      p.hs>=0.3?`${p.hs.toFixed(2)} mm — moderate risk; fine or Turkish grinds may clog and slow the brew. Use a slightly coarser grind.`:
+      `${p.hs.toFixed(2)} mm — high clogging risk. Coffee fines are typically 0.1–0.3 mm and will blind the screen, stalling the brew. Consider ≥ 0.3 mm, or accept that only very coarse grinds will work.`
+    ),
+    mkChk('Open area (structural integrity)',
+      openPct>=20&&openPct<=50?'ok':(openPct>=10&&openPct<20)||(openPct>50&&openPct<=65)?'wn':'fl',
+      openPct>=20&&openPct<=50?`${openPct.toFixed(1)}% — within recommended 20–50% range`:
+      openPct<10?`${openPct.toFixed(1)}% — very low; will significantly restrict flow`:
+      openPct<20?`${openPct.toFixed(1)}% — low; consider tighter spacing for better flow`:
+      openPct<=65?`${openPct.toFixed(1)}% — high; screen may be fragile under brewing pressure`:
+      `${openPct.toFixed(1)}% — very high; structural integrity likely compromised`
+    ),
+  ];
+  document.getElementById('checks').innerHTML=chks.join('');
+}
+
+function dlPDF(){
+  const p=gp(),H=genHoles(p);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:[VS,VS]});
+  const cx=VS/2,cy=VS/2;
+  doc.setLineWidth(0.01);
+  doc.setDrawColor(255,0,0);
+  doc.circle(cx,cy,R,'S');
+  doc.circle(cx,cy,p.ch/2,'S');
+  doc.setLineWidth(0.005);
+  for(const[x,y]of H) doc.circle(cx+x,cy+y,p.hs/2,'S');
+  const fname=`filter-screen-${p.pat}-${H.length}holes-${gv('th-n')}mm.pdf`;
+  doc.save(fname);
+}
+
+function dl(){
+  const p=gp(),H=genHoles(p),hr=(p.hs/2).toFixed(4);
+  const th=gv('th-n');
+  let g=`<g fill="none" stroke="red" stroke-width="0.01">`;
+  g+=`<circle cx="0" cy="0" r="${R}"/>`;
+  g+=`<circle cx="0" cy="0" r="${(p.ch/2).toFixed(4)}"/>`;
+  for(const[x,y]of H)g+=`<circle cx="${x.toFixed(4)}" cy="${y.toFixed(4)}" r="${hr}"/>`;
+  g+=`</g>`;
+  const meta=`pattern:${p.pat} holes:${H.length} hole-dia:${p.hs}mm spacing:${p.sp}mm outer-border:${p.ob}mm center-hole:${p.ch}mm center-border:${p.cb}mm material:${th}mm`;
+  const out=`<?xml version="1.0" encoding="UTF-8"?>\n<!-- Aeropress filter screen — ${meta} -->\n<svg xmlns="http://www.w3.org/2000/svg" width="${VS}mm" height="${VS}mm" viewBox="${-(R+PAD)} ${-(R+PAD)} ${VS} ${VS}">\n  <title>Filter screen ${D}mm \xb7 ${H.length} holes \xb7 ${th}mm stock</title>\n  ${g}\n</svg>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([out],{type:'image/svg+xml'}));
+  a.download=`filter-screen-${p.pat}-${H.length}holes-${th}mm.svg`;
+  a.click();
+}
+
+[['hs-r','hs-n'],['sp-r','sp-n'],['ob-r','ob-n'],['ch-r','ch-n'],['cb-r','cb-n'],['th-r','th-n']].forEach(([r,n])=>{
+  const re=document.getElementById(r),ne=document.getElementById(n);
+  re.oninput=()=>{
+    ne.value=(+re.value).toFixed(2);
+    // if hole size changed, clamp spacing to >= hole diameter
+    if(r==='hs-r'){
+      const minSp=+re.value;
+      const spR=document.getElementById('sp-r'),spN=document.getElementById('sp-n');
+      spR.min=minSp.toFixed(2);
+      if(+spN.value<minSp){spR.value=minSp.toFixed(2);spN.value=minSp.toFixed(2);}
+    }
+    render();
+  };
+  ne.oninput=()=>{
+    re.value=ne.value;
+    if(n==='hs-n'){
+      const minSp=+ne.value;
+      const spR=document.getElementById('sp-r'),spN=document.getElementById('sp-n');
+      spR.min=minSp.toFixed(2);
+      if(+spN.value<minSp){spR.value=minSp.toFixed(2);spN.value=minSp.toFixed(2);}
+    }
+    render();
+  };
+});
+document.getElementById('pat').onchange=render;
+render();
+</script>
+</body>
+</html>
